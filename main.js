@@ -27,8 +27,33 @@ async function main() {
     // 开始签到
     for (const user of userinfo) {
       const headers = { 'cookie': 'token=' + user.token + '; userid=' + user.userid }
+      // console.log(headers)
       const userDetail = await send(`/user/detail?timestrap=${Date.now()}`, "GET", headers)
+      if (userDetail?.data?.nickname == null) {
+        printRed(`token过期或账号不存在, userid: ${user.userid}`)
+        continue
+      }
       printMagenta(`账号 ${userDetail?.data?.nickname} 开始领取VIP...`)
+
+
+      printYellow("开始领取VIP...")
+      for (let i = 1; i <= 8; i++) {
+        // ad获取vip
+        const ad = await send(`/youth/vip?timestrap=${Date.now()}`, "GET", headers)
+        // 签到出现问题
+        // errorMsg[`${userDetail?.data?.nickname} ad${i}`] = ad
+        if (ad.status === 1) {
+          printGreen(`第${i}次领取成功`)
+          if (i != 8) {
+            await delay(30 * 1000)
+          }
+        } else {
+          printRed(`第${i}次领取失败，目前属于已知问题`)
+          console.dir(ad, { depth: null })
+          // errorMsg[userDetail?.data?.nickname + " ad"] = ad
+          break
+        }
+      }
 
       // 开始听歌
       printYellow(`开始听歌领取VIP...`)
@@ -40,24 +65,6 @@ async function main() {
       } else {
         errorMsg[userDetail?.data?.nickname + " listen"] = listen
         printRed("听歌领取失败")
-      }
-
-      printYellow("开始领取VIP...")
-      for (let i = 1; i <= 8; i++) {
-        // ad获取vip
-        const ad = await send(`/youth/vip?timestrap=${Date.now()}`, "GET", headers)
-        // 签到出现问题，每次都添加
-        errorMsg[`${userDetail?.data?.nickname} ad${i}`] = ad
-        if (ad.status === 1) {
-          printGreen(`第${i}次领取成功`)
-          if (i != 8) {
-            await delay(30 * 1000)
-          }
-        } else {
-          printRed(`第${i}次领取失败`)
-          // errorMsg[userDetail?.data?.nickname + " ad"] = ad
-          break
-        }
       }
 
       const vip_details = await send(`/user/vip/detail?timestrap=${Date.now()}`, "GET", headers)
